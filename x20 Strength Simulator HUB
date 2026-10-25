@@ -1,279 +1,278 @@
 -- ============================================
---  UNIVERSAL GUI — x20 STRENGTH SIMULATOR (v12)
---  PainKillersUi Edition
+--  FITNESS SIMULATOR HUB | PainKillersUI Edition
+--  Created by Angry66gsjjd (Clan: PainKillers)
 -- ============================================
 
-local PainKillersUi = loadstring(game:HttpGet("https://raw.githubusercontent.com/Angry66gsjjd/uilib/main/PainKillersUi"))()
+-- ИСПОЛЬЗУЕМ ТВОЮ БИБЛИОТЕКУ
+local PainKillersUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Angry66gsjjd/My-Library/main/dist/main.lua"))()
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
-
--- ============================================
---  AUTO-SAVE SYSTEM
--- ============================================
-local CONFIG_FILE = "UniversalGUI_Config.json"
-local Config = { WalkSpeed = 16 }
-
-local function loadConfig()
-    if isfile and readfile and isfile(CONFIG_FILE) then
-        local ok, data = pcall(function() return HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
-        if ok and type(data) == "table" then
-            for k, v in pairs(data) do Config[k] = v end
-        end
-    end
-end
-local function saveConfig()
-    if writefile then pcall(function() writefile(CONFIG_FILE, HttpService:JSONEncode(Config)) end) end
-end
-loadConfig()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
 -- ============================================
 --  INTERFACE
 -- ============================================
-local Window = PainKillersUi:CreateWindow({
-    Title = "x20 Strength Sim | v12",
-    Theme = "Dark",
+local Window = PainKillersUI:CreateWindow({
+    Title = "Fitness Simulator | Hub",
+    Icon = "box",
+    Author = "Angry66gsjjd",
+    Folder = "FitnessSim",
     Size = UDim2.fromOffset(550, 480),
+    Theme = "Dark",
+    ToggleKey = Enum.KeyCode.RightShift, -- Кнопка открытия (Правый Shift)
 })
 
 -- ============================================
---  TAB: MAIN (AUTO-FARM)
+--  TAB: MAIN (FARM & AUTO)
 -- ============================================
-local MainTab = Window:Tab({ Title = "Main" })
-MainTab:Section({ Title = "Auto-Farm (All Stats)" })
+local MainTab = Window:Tab({ Title = "Main", Icon = "swords" })
+MainTab:Section({ Title = "Farming & Upgrades" })
 
+-- Farm / Sell
 local farmSpeed = 0.05
 MainTab:Slider({
     Title = "Farm Speed",
-    Value = { Min = 0.05, Max = 0.5, Default = 0.05 },
+    Desc = "0.05 = Fast / 0.1 = Safe",
+    Icon = "zap",
+    Value = { Min = 0.01, Max = 0.5, Default = 0.05 },
+    Step = 0.01,
     Callback = function(val) farmSpeed = val end
 })
 
-local function createFarmToggle(tab, title, eventName)
-    local connection = nil
-    tab:Toggle({
-        Title = title,
-        Value = false,
-        Callback = function(state)
-            if state then
-                connection = RunService.Heartbeat:Connect(function()
-                    task.wait(farmSpeed)
-                    pcall(function()
-                        local eventObj = game:GetService("Workspace").Get:FindFirstChild(eventName)
-                        if eventObj and eventObj:IsA("RemoteEvent") then
-                            eventObj:FireServer()
-                        end
-                    end)
-                end)
-            else
-                if connection then connection:Disconnect() connection = nil end
-            end
-        end,
-    })
-end
+local isFarming = false
+local farmConnection = nil
 
-createFarmToggle(MainTab, "Auto Strength 1 (st)", "st")
-createFarmToggle(MainTab, "Auto Strength 2 (st2)", "st2")
-createFarmToggle(MainTab, "Auto Rank 1 (rk)", "rk")
-createFarmToggle(MainTab, "Auto Rank 2 (rkauto)", "rkauto")
-createFarmToggle(MainTab, "Auto Sacrifice 1 (sac)", "sac")
-createFarmToggle(MainTab, "Auto Sacrifice 2 (sac2)", "sac2")
-createFarmToggle(MainTab, "Auto Ascension 1 (asc)", "asc")
-createFarmToggle(MainTab, "Auto Ascension 2 (asc2)", "asc2")
-
--- ============================================
---  TAB: UPGRADES
--- ============================================
-local UpgradeTab = Window:Tab({ Title = "Upgrades" })
-UpgradeTab:Section({ Title = "Auto-Buy Upgrades" })
-
-local function interactWithObject(parent, objectName)
-    local obj = parent:FindFirstChild(objectName)
-    if obj then
-        if obj:IsA("RemoteEvent") then
-            obj:FireServer()
-        elseif obj:IsA("BasePart") then
-            local cd = obj:FindFirstChildOfClass("ClickDetector")
-            if cd then fireclickdetector(cd) end
-        end
-    end
-end
-
-local function createUpgradeToggle(title, listOfObjects)
-    local connection = nil
-    local isActive = false
-    UpgradeTab:Toggle({
-        Title = title,
-        Value = false,
-        Callback = function(state)
-            isActive = state
-            if isActive then
-                if connection then connection:Disconnect() end
-                connection = RunService.Heartbeat:Connect(function()
-                    task.wait(0.3)
-                    if not isActive then return end
-                    pcall(function()
-                        local get = game:GetService("Workspace"):FindFirstChild("Get")
-                        local panel = game:GetService("Workspace"):FindFirstChild("Panel")
-                        for _, objName in pairs(listOfObjects) do
-                            if get then interactWithObject(get, objName) end
-                            if panel then interactWithObject(panel, objName) end
-                        end
-                    end)
-                end)
-            else
-                if connection then connection:Disconnect() connection = nil end
-            end
-        end,
-    })
-end
-
-createUpgradeToggle("Auto Upgrade: Strength", {"st1", "st10", "st100", "st1000"})
-createUpgradeToggle("Auto Upgrade: Rank", {"rk1", "rk10"})
-createUpgradeToggle("Auto Upgrade: Chance", {"chupg1", "chupg2", "chupg3", "chupg4", "ch1", "ch100"})
-createUpgradeToggle("Auto Upgrade: Sacrifice", {"sacupg1", "sacupg2", "sacupg3", "sacupg4", "sac1", "sac10", "sac1000", "sac100k", "sac10M"})
-createUpgradeToggle("Auto Upgrade: Ascension", {"asc1", "asc10"})
-createUpgradeToggle("Auto Upgrade: Secret", {"sec1", "sec60", "sec10k"})
-
--- ============================================
---  TAB: BOXES
--- ============================================
-local BoxTab = Window:Tab({ Title = "Boxes" })
-BoxTab:Section({ Title = "Max Boxes Farm" })
-
-local function createBoxToggle(title, boxList, getSpeedFunc)
-    local isActive = false
-    local connection = nil
-    BoxTab:Toggle({
-        Title = title,
-        Value = false,
-        Callback = function(state)
-            isActive = state
-            if isActive then
-                if connection then connection:Disconnect() end
-                connection = RunService.Heartbeat:Connect(function()
-                    task.wait(getSpeedFunc()) 
-                    if not isActive then return end
-                    pcall(function()
-                        local getbox = game:GetService("Workspace"):FindFirstChild("Getbox")
-                        if getbox then
-                            for _, boxName in pairs(boxList) do
-                                interactWithObject(getbox, boxName)
-                            end
-                        end
-                    end)
-                end)
-            else
-                if connection then connection:Disconnect() connection = nil end
-            end
-        end,
-    })
-end
-
-createBoxToggle("Auto Farm MAX Boxes", {"basic15", "cost5", "mega4", "ultra2", "secret1"}, function() return 0.1 end)
-
-BoxTab:Section({ Title = "MEGA-SPAM BOX5" })
-
-local box5Speed = 0.05
-BoxTab:Slider({
-    Title = "Box5 Spam Speed",
-    Value = { Min = 0.05, Max = 0.2, Default = 0.05 },
-    Callback = function(val) box5Speed = val end
-})
-
-local isSpammingBox5 = false
-local box5Connection = nil
-BoxTab:Toggle({
-    Title = "Auto Box5 (MAX SPAM)",
+MainTab:Toggle({
+    Title = "Auto Farm / Sell",
+    Desc = "Spams Lift and Sell",
+    Icon = "flame",
     Value = false,
     Callback = function(state)
-        isSpammingBox5 = state
-        if isSpammingBox5 then
-            if box5Connection then box5Connection:Disconnect() end
-            box5Connection = RunService.Heartbeat:Connect(function()
-                task.wait(box5Speed)
-                if not isSpammingBox5 then return end
+        isFarming = state
+        if isFarming then
+            if farmConnection then farmConnection:Disconnect() end
+            farmConnection = RunService.Heartbeat:Connect(function()
+                task.wait(farmSpeed)
+                if not isFarming then return end
                 pcall(function()
-                    local boxs = game:GetService("Workspace"):FindFirstChild("Boxs")
-                    local panel = game:GetService("Workspace"):FindFirstChild("Panel")
-                    local function spamBox5(obj)
-                        if obj then
-                            if obj:IsA("RemoteEvent") then
-                                for i = 1, 5 do obj:FireServer() end
-                            elseif obj:IsA("BasePart") then
-                                local cd = obj:FindFirstChildOfClass("ClickDetector")
-                                if cd then for i = 1, 5 do fireclickdetector(cd) end end
+                    ReplicatedStorage.Events.Lift:FireServer()
+                    ReplicatedStorage.Events.Sell:FireServer()
+                end)
+            end)
+            PainKillersUI:Notify({Title = "Auto Farm", Content = "Enabled", Duration = 3, Icon = "play"})
+        else
+            if farmConnection then farmConnection:Disconnect() farmConnection = nil end
+            PainKillersUI:Notify({Title = "Auto Farm", Content = "Disabled", Duration = 3, Icon = "square"})
+        end
+    end,
+})
+
+-- Auto Upgrade
+local isUpgrading = false
+local upgradeConnection = nil
+
+MainTab:Toggle({
+    Title = "Auto Upgrade (All)",
+    Desc = "Buys Tiers, Bodies, Weights, Morphs, Auras",
+    Icon = "arrow-up",
+    Value = false,
+    Callback = function(state)
+        isUpgrading = state
+        if isUpgrading then
+            if upgradeConnection then upgradeConnection:Disconnect() end
+            upgradeConnection = RunService.Heartbeat:Connect(function()
+                task.wait(0.3)
+                if not isUpgrading then return end
+                pcall(function()
+                    local E = ReplicatedStorage.Events["Buy All"]
+                    if E then
+                        E:FireServer("Tiers")
+                        E:FireServer("Bodies")
+                        E:FireServer("Weights")
+                        E:FireServer("Morphs")
+                        E:FireServer("Auras")
+                    end
+                end)
+            end)
+            PainKillersUI:Notify({Title = "Auto Upgrade", Content = "Enabled", Duration = 3, Icon = "play"})
+        else
+            if upgradeConnection then upgradeConnection:Disconnect() upgradeConnection = nil end
+            PainKillersUI:Notify({Title = "Auto Upgrade", Content = "Disabled", Duration = 3, Icon = "square"})
+        end
+    end,
+})
+
+-- ============================================
+--  TAB: COMBAT (BOSSES)
+-- ============================================
+local CombatTab = Window:Tab({ Title = "Combat", Icon = "skull" })
+CombatTab:Section({ Title = "Auto Kill Bosses" })
+
+-- Auto Kill Boss
+local isKillingBoss = false
+local bossConnection = nil
+
+CombatTab:Toggle({
+    Title = "Auto Kill Boss",
+    Desc = "Attacks the normal Boss",
+    Icon = "crosshair",
+    Value = false,
+    Callback = function(state)
+        isKillingBoss = state
+        if isKillingBoss then
+            if bossConnection then bossConnection:Disconnect() end
+            bossConnection = RunService.Heartbeat:Connect(function()
+                task.wait(0.1)
+                if not isKillingBoss then return end
+                pcall(function()
+                    local bs = Workspace:FindFirstChild("Boss")
+                    local model = bs and bs:FindFirstChild("Model")
+                    local target = model and model:FindFirstChild("Boss")
+                    if target then
+                        ReplicatedStorage.Events.Damage:FireServer(target)
+                    end
+                end)
+            end)
+            PainKillersUI:Notify({Title = "Auto Boss", Content = "Enabled", Duration = 3, Icon = "play"})
+        else
+            if bossConnection then bossConnection:Disconnect() bossConnection = nil end
+            PainKillersUI:Notify({Title = "Auto Boss", Content = "Disabled", Duration = 3, Icon = "square"})
+        end
+    end,
+})
+
+-- Auto Kill Mega Boss
+local isKillingMega = false
+local megaConnection = nil
+
+CombatTab:Toggle({
+    Title = "Auto Kill Mega Boss",
+    Desc = "Attacks the Mega Boss",
+    Icon = "crosshair",
+    Value = false,
+    Callback = function(state)
+        isKillingMega = state
+        if isKillingMega then
+            if megaConnection then megaConnection:Disconnect() end
+            megaConnection = RunService.Heartbeat:Connect(function()
+                task.wait(0.1)
+                if not isKillingMega then return end
+                pcall(function()
+                    local mega = Workspace:FindFirstChild("Mega Boss")
+                    local model = mega and mega:FindFirstChild("Model")
+                    local target = model and model:FindFirstChild("Boss2")
+                    if target then
+                        ReplicatedStorage.Events.Damage:FireServer(target)
+                    end
+                end)
+            end)
+            PainKillersUI:Notify({Title = "Auto Mega Boss", Content = "Enabled", Duration = 3, Icon = "play"})
+        else
+            if megaConnection then megaConnection:Disconnect() megaConnection = nil end
+            PainKillersUI:Notify({Title = "Auto Mega Boss", Content = "Disabled", Duration = 3, Icon = "square"})
+        end
+    end,
+})
+
+-- ============================================
+--  TAB: MISC (COINS & PETS)
+-- ============================================
+local MiscTab = Window:Tab({ Title = "Misc", Icon = "box" })
+MiscTab:Section({ Title = "Coins & Pets" })
+
+-- Auto Coins
+local isCollectingCoins = false
+local coinConnection = nil
+
+MiscTab:Toggle({
+    Title = "Auto Collect Coins",
+    Desc = "Teleports coins to you",
+    Icon = "coins",
+    Value = false,
+    Callback = function(state)
+        isCollectingCoins = state
+        if isCollectingCoins then
+            if coinConnection then coinConnection:Disconnect() end
+            coinConnection = RunService.Heartbeat:Connect(function()
+                task.wait(1)
+                if not isCollectingCoins then return end
+                pcall(function()
+                    local pu = Workspace:FindFirstChild("Powerups")
+                    if pu then
+                        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            for _, D in pairs(pu:GetChildren()) do
+                                if D.Name == "Coin" and D:FindFirstChild("Main") then
+                                    D.Main.CFrame = hrp.CFrame
+                                end
                             end
                         end
                     end
-                    if boxs then spamBox5(boxs:FindFirstChild("box5")) end
-                    if panel then spamBox5(panel:FindFirstChild("box5")) end
                 end)
             end)
+            PainKillersUI:Notify({Title = "Auto Coins", Content = "Enabled", Duration = 3, Icon = "play"})
         else
-            if box5Connection then box5Connection:Disconnect() box5Connection = nil end
+            if coinConnection then coinConnection:Disconnect() coinConnection = nil end
+            PainKillersUI:Notify({Title = "Auto Coins", Content = "Disabled", Duration = 3, Icon = "square"})
         end
     end,
 })
 
--- ============================================
---  TAB: UTILS
--- ============================================
-local UtilsTab = Window:Tab({ Title = "Utils" })
-UtilsTab:Section({ Title = "Fix Stuck Stats (inf/nan)" })
+-- Auto Buy Pets
+local petName = "Cosmic Egg"
+local isBuyingPets = false
+local petConnection = nil
 
-local function pressPanelButton(name)
-    pcall(function()
-        local panel = game:GetService("Workspace"):FindFirstChild("Panel")
-        local get = game:GetService("Workspace"):FindFirstChild("Get")
-        local function click(parent, btnName)
-            if parent then
-                local btn = parent:FindFirstChild(btnName)
-                if btn then
-                    if btn:IsA("RemoteEvent") then btn:FireServer()
-                    elseif btn:IsA("BasePart") then
-                        local cd = btn:FindFirstChildOfClass("ClickDetector")
-                        if cd then fireclickdetector(cd) end
+MiscTab:Textbox({
+    Title = "Pet Egg Name",
+    Desc = "Enter the exact egg name (e.g., Cosmic Egg)",
+    Value = "Cosmic Egg",
+    Callback = function(text) petName = text end
+})
+
+MiscTab:Toggle({
+    Title = "Auto Buy Pets",
+    Desc = "Buys the specified egg",
+    Icon = "paw-print",
+    Value = false,
+    Callback = function(state)
+        isBuyingPets = state
+        if isBuyingPets then
+            if petConnection then petConnection:Disconnect() end
+            petConnection = RunService.Heartbeat:Connect(function()
+                task.wait(0.5)
+                if not isBuyingPets then return end
+                pcall(function()
+                    local buyPet = ReplicatedStorage.Events:FindFirstChild("Buy Pet")
+                    if buyPet then
+                        buyPet:FireServer(petName)
                     end
-                end
-            end
+                end)
+            end)
+            PainKillersUI:Notify({Title = "Auto Pets", Content = "Enabled", Duration = 3, Icon = "play"})
+        else
+            if petConnection then petConnection:Disconnect() petConnection = nil end
+            PainKillersUI:Notify({Title = "Auto Pets", Content = "Disabled", Duration = 3, Icon = "square"})
         end
-        click(panel, name)
-        click(get, name)
-    end)
-end
-
-UtilsTab:Button({
-    Title = "Press RESET 1 (resets)",
-    Callback = function()
-        pressPanelButton("resets")
-        pressPanelButton("reset")
-        Window:Notify({Title = "Reset 1", Content = "Pressed! Check your stats.", Duration = 3})
-    end,
-})
-
-UtilsTab:Button({
-    Title = "Press RESET 2 (reset2)",
-    Callback = function()
-        pressPanelButton("reset2")
-        Window:Notify({Title = "Reset 2", Content = "Pressed! Check your stats.", Duration = 3})
     end,
 })
 
 -- ============================================
---  TAB: PLAYER
+--  TAB: PLAYER (PHYSICS)
 -- ============================================
-local PlayerTab = Window:Tab({ Title = "Player" })
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "user" })
 PlayerTab:Section({ Title = "Physics & Movement" })
 
 PlayerTab:Slider({
     Title = "WalkSpeed",
-    Value = { Min = 16, Max = 500, Default = Config.WalkSpeed or 16 },
+    Desc = "From 16 to 500",
+    Icon = "zap",
+    Value = { Min = 16, Max = 500, Default = 16 },
+    Step = 1,
     Callback = function(value)
-        Config.WalkSpeed = value
-        saveConfig()
         local char = LocalPlayer.Character
         if char then
             local hum = char:FindFirstChildOfClass("Humanoid")
@@ -286,6 +285,7 @@ local noclip = false
 local noclipConnection = nil
 PlayerTab:Toggle({
     Title = "Noclip",
+    Icon = "ghost",
     Value = false,
     Callback = function(state)
         noclip = state
@@ -309,12 +309,16 @@ local flySpeed = 50
 
 PlayerTab:Slider({
     Title = "Fly Speed",
+    Icon = "wind",
     Value = { Min = 10, Max = 200, Default = 50 },
+    Step = 1,
     Callback = function(value) flySpeed = value end
 })
 
 PlayerTab:Toggle({
     Title = "Fly",
+    Desc = "Space - up, Shift - down",
+    Icon = "plane",
     Value = false,
     Callback = function(state)
         isFlying = state
@@ -349,26 +353,20 @@ PlayerTab:Toggle({
     end
 })
 
-local function onCharacterAdded(char)
-    task.wait(1)
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum and Config.WalkSpeed then hum.WalkSpeed = Config.WalkSpeed end
-end
-if LocalPlayer.Character then onCharacterAdded(LocalPlayer.Character) end
-LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
-
 -- ============================================
 --  TAB: OTHER
 -- ============================================
-local OtherTab = Window:Tab({ Title = "Other" })
+local OtherTab = Window:Tab({ Title = "Other", Icon = "wrench" })
 OtherTab:Section({ Title = "Useful Scripts" })
 
 OtherTab:Button({
     Title = "Dex++ (Explorer)",
+    Icon = "code",
     Callback = function() pcall(function() loadstring(game:HttpGet("https://github.com/AZYsGithub/DexPlusPlus/releases/latest/download/out.lua"))() end) end,
 })
 OtherTab:Button({
     Title = "Infinite Yield",
+    Icon = "terminal",
     Callback = function()
         task.spawn(function()
             pcall(function() getgenv().IY_LOADED = nil end)
@@ -380,23 +378,29 @@ OtherTab:Button({
 })
 OtherTab:Button({
     Title = "Anti-AFK",
+    Icon = "clock",
     Callback = function() pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/hassanxzayn-lua/Anti-afk/main/antiafkbyhassanxzyn"))() end) end,
 })
 
 -- ============================================
 --  TAB: DESCRIPTIONS & CREDITS
 -- ============================================
-local DescTab = Window:Tab({ Title = "Descriptions" })
+local DescTab = Window:Tab({ Title = "Descriptions", Icon = "info" })
 DescTab:Section({ Title = "Script Information" })
 
 DescTab:Paragraph({
     Title = "Author",
-    Desc = "Angry66gsjjd (Clan: PainKillers)"
+    Desc = "Angry66gsjjd"
+})
+
+DescTab:Paragraph({
+    Title = "Clan",
+    Desc = "PainKillers"
 })
 
 DescTab:Paragraph({
     Title = "License",
-    Desc = "This script is Open Source. You are free to use, modify, and share it as long as you give proper credit to the original author."
+    Desc = "This script is Open Source. You are free to use, modify, and share it as long as you give proper credit to the author."
 })
 
-print("[Universal GUI] v12 Loaded with PainKillersUi.")
+print("[Fitness Simulator Hub] Loaded with PainKillersUI.")
